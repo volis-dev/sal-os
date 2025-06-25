@@ -10,12 +10,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-// Create Supabase client
+// Create Supabase client with explicit storage key
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storageKey: 'sb-rrlahnmnyuinoymrfufl-auth-token', // Force the exact storage key
   }
 })
 
@@ -66,4 +67,4 @@ export const authUtils = {
     const { data: { session } } = await supabase.auth.getSession()
     return session
   }
-} 
+}
