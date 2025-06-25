@@ -15,7 +15,7 @@ import Link from 'next/link'
 function LoginFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { signIn, isLoading } = useAuth()
+  const { signIn, isLoading, isAuthenticated } = useAuth()
   
   const [formData, setFormData] = useState({
     email: '',
@@ -25,6 +25,14 @@ function LoginFormContent() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      const redirectTo = searchParams.get('redirect') || '/'
+      window.location.replace(redirectTo)
+    }
+  }, [isAuthenticated, isLoading, searchParams])
 
   // Handle URL messages
   useEffect(() => {
@@ -52,20 +60,30 @@ function LoginFormContent() {
     setIsSubmitting(true)
 
     try {
+      console.log('Attempting login...')
       const { error } = await signIn(formData.email, formData.password)
       
       if (error) {
+        console.error('Login error:', error)
         setError(error)
+        setIsSubmitting(false)
       } else {
-        // Wait a moment for auth state to propagate
-        await new Promise(resolve => setTimeout(resolve, 100))
+        console.log('Login successful!')
+        // Don't set isSubmitting to false here - keep the loading state
         
-        // Force a hard navigation to avoid auth state issues
-        window.location.href = searchParams.get('redirect') || '/'
+        // Get redirect URL
+        const redirectTo = searchParams.get('redirect') || '/'
+        console.log('Redirecting to:', redirectTo)
+        
+        // Wait for auth state to fully propagate
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Force a complete page reload to the destination
+        window.location.replace(redirectTo)
       }
     } catch (err) {
+      console.error('Unexpected login error:', err)
       setError('An unexpected error occurred')
-    } finally {
       setIsSubmitting(false)
     }
   }
