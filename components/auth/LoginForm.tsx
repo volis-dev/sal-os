@@ -52,7 +52,9 @@ function LoginFormContent() {
     setIsSubmitting(true)
 
     try {
-      const { error } = await signIn(formData.email, formData.password)
+      const result = await signIn(formData.email, formData.password)
+      console.log('SignIn result:', result)
+      const { error } = result
       
       if (error) {
         setError(error)
