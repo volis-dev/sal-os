@@ -1,13 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove static export to enable middleware
   trailingSlash: true,
   images: {
     unoptimized: true
   },
-  // Disable prerendering of error pages to avoid SSR context issues
   skipTrailingSlashRedirect: true,
-  skipMiddlewareUrlNormalize: true
+  skipMiddlewareUrlNormalize: true,
+  // Add this to force client-side rendering for auth pages
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  }
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig
