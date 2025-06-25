@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from '@/hooks/useAuth'
-import { AuthGuard } from '@/components/auth/AuthGuard'
 import { Loader2 } from 'lucide-react'
 import {
   BookOpen,
@@ -80,38 +79,44 @@ export default function Home() {
     )
   }
 
-  return (
-    <AuthGuard requireAuth={true} requireEmailConfirmation={true}>
-      <SidebarProvider>
-        <div className="flex h-screen">
-          <AppSidebar 
-            setActiveTab={setActiveTab} 
-            currentTab={activeTab} 
-            onSignOut={signOut}
-          />
-          <main className="flex-1 overflow-auto">
-            <div className="p-6">
-              {activeTab === "Dashboard" && <GlobalDashboard onNavigateToModule={setActiveTab} />}
-              {activeTab === "Settings" && <Settings onNavigateToDashboard={() => setActiveTab("Dashboard")} />}
-              {activeTab === "Journal" && <JournalInterface />}
-              {activeTab === "Modules" && <ModulesInterface />}
-              {activeTab === "Tasks" && <TasksInterface />}
-              {activeTab === "Library" && <LibraryInterface />}
-              {activeTab === "Life Arenas" && <LifeArenasInterface />}
-              {activeTab === "Journey Map" && <JourneyMapInterface setActiveTab={setActiveTab} />}
-              {activeTab === "Growth Engine" && <GrowthEngineInterface />}
-            </div>
-          </main>
-        </div>
+  // Early return if not authenticated - ADD THIS
+  if (!isLoading && !isAuthenticated) {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/login')
+    }
+    return null
+  }
 
-        {showOnboarding && (
-          <Onboarding onComplete={() => {
-            setShowOnboarding(false)
-            localStorage.setItem("sal-os-onboarding-completed", "true")
-          }} />
-        )}
-      </SidebarProvider>
-    </AuthGuard>
+  return (
+    <SidebarProvider>
+      <div className="flex h-screen">
+        <AppSidebar 
+          setActiveTab={setActiveTab} 
+          currentTab={activeTab} 
+          onSignOut={signOut}
+        />
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">
+            {activeTab === "Dashboard" && <GlobalDashboard onNavigateToModule={setActiveTab} />}
+            {activeTab === "Settings" && <Settings onNavigateToDashboard={() => setActiveTab("Dashboard")} />}
+            {activeTab === "Journal" && <JournalInterface />}
+            {activeTab === "Modules" && <ModulesInterface />}
+            {activeTab === "Tasks" && <TasksInterface />}
+            {activeTab === "Library" && <LibraryInterface />}
+            {activeTab === "Life Arenas" && <LifeArenasInterface />}
+            {activeTab === "Journey Map" && <JourneyMapInterface setActiveTab={setActiveTab} />}
+            {activeTab === "Growth Engine" && <GrowthEngineInterface />}
+          </div>
+        </main>
+      </div>
+
+      {showOnboarding && (
+        <Onboarding onComplete={() => {
+          setShowOnboarding(false)
+          localStorage.setItem("sal-os-onboarding-completed", "true")
+        }} />
+      )}
+    </SidebarProvider>
   )
 }
 
