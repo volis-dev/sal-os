@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+
+# Books and PDFs
+books/
+*.pdf
+
+# Build outputs and logs
+build-output.txt
+build-verification.md
+required-env-vars.txt
+test-output.css
+
+# Scripts output
+scripts/*.log
+scripts/*.txt

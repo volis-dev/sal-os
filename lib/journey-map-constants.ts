@@ -1,0 +1,68 @@
+import type { SalBook } from "@/types/journey-map"
+
+export const salBooks: SalBook[] = [
+  {
+    id: "book-1",
+    title: "Life Leadership & Education",
+    subtitle: "Book the First",
+    totalChapters: 5,
+    color: "from-emerald-500 to-teal-600",
+    position: { x: 10, y: 50 },
+  },
+  {
+    id: "book-2",
+    title: "Change, Growth & Freedom",
+    subtitle: "Book the Second",
+    totalChapters: 12,
+    color: "from-blue-500 to-indigo-600",
+    position: { x: 25, y: 30 },
+  },
+  {
+    id: "book-3",
+    title: "SAL Philosophy",
+    subtitle: "Book the Third",
+    totalChapters: 7,
+    color: "from-purple-500 to-pink-600",
+    position: { x: 40, y: 60 },
+  },
+  {
+    id: "book-4",
+    title: "SAL Theory",
+    subtitle: "Book the Fourth",
+    totalChapters: 21,
+    color: "from-amber-500 to-orange-600",
+    position: { x: 55, y: 25 },
+  },
+  {
+    id: "book-5",
+    title: "SAL Model",
+    subtitle: "Book the Fifth",
+    totalChapters: 9,
+    color: "from-red-500 to-rose-600",
+    position: { x: 70, y: 55 },
+  },
+  {
+    id: "book-6",
+    title: "Success Stories",
+    subtitle: "Book the Sixth",
+    totalChapters: 12,
+    color: "from-cyan-500 to-blue-600",
+    position: { x: 85, y: 35 },
+  },
+  {
+    id: "book-7",
+    title: "Pedagogy",
+    subtitle: "Book the Seventh",
+    totalChapters: 10,
+    color: "from-violet-500 to-purple-600",
+    position: { x: 90, y: 65 },
+  },
+  {
+    id: "book-8",
+    title: "Sovereignty",
+    subtitle: "Book the Eighth",
+    totalChapters: 5,
+    color: "from-slate-600 to-gray-700",
+    position: { x: 95, y: 45 },
+  },
+] 

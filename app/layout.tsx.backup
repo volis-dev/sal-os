@@ -1,0 +1,26 @@
+"use client"
+
+import "./globals.css";
+import { AuthProvider } from '@/hooks/useAuth'
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <head>
+        <title>SAL OS - Personal Development Platform</title>
+        <meta name="description" content="Systematic Approach to Life - Personal Development Platform" />
+      </head>
+      <body
+        className={`antialiased`}
+      >
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}

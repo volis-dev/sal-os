@@ -1,0 +1,112 @@
+import { AlertTriangle, Brain, Users, Compass } from "lucide-react"
+import type { ExistentialLevel, GravityCategory } from "@/types/growth"
+
+export const existentialLevels: ExistentialLevel[] = [
+  {
+    level: 1,
+    name: "Education Stage",
+    description: "Learning SAL principles and building foundational knowledge",
+    color: "from-slate-400 to-gray-500",
+    requirements: ["Complete Book 1", "Begin journal practice", "Identify accountability partner"],
+    focus: "Knowledge acquisition and initial commitment",
+  },
+  {
+    level: 2,
+    name: "Beginner's Stage",
+    description: "Starting to apply SAL principles in daily life",
+    color: "from-blue-400 to-indigo-500",
+    requirements: ["Complete 3 books", "30 journal entries", "Begin life arena assessment"],
+    focus: "Initial application and habit formation",
+  },
+  {
+    level: 3,
+    name: "Practitioner's Stage",
+    description: "Consistent application with growing self-awareness",
+    color: "from-green-400 to-emerald-500",
+    requirements: ["Complete 5 books", "100 journal entries", "Establish daily SAL practices"],
+    focus: "Consistency and self-discipline development",
+  },
+  {
+    level: 4,
+    name: "Refining Stage",
+    description: "Fine-tuning practices and deepening understanding",
+    color: "from-purple-400 to-violet-500",
+    requirements: ["Complete 6 books", "Advanced life arena scores", "Mentor others"],
+    focus: "Refinement and deeper integration",
+  },
+  {
+    level: 5,
+    name: "Polishing Stage",
+    description: "Mastering SAL principles with consistent excellence",
+    color: "from-amber-400 to-orange-500",
+    requirements: ["Complete 7 books", "High life arena scores", "Leadership roles"],
+    focus: "Excellence and mastery",
+  },
+  {
+    level: 6,
+    name: "SAL-Actualization Stage",
+    description: "Living SAL principles naturally and authentically",
+    color: "from-pink-400 to-rose-500",
+    requirements: ["Complete all books", "Sustained high performance", "Significant service"],
+    focus: "Natural integration and authenticity",
+  },
+  {
+    level: 7,
+    name: "Leadership Stage",
+    description: "Leading others through SAL principles and example",
+    color: "from-cyan-400 to-blue-500",
+    requirements: ["Teach SAL to others", "Organizational leadership", "Community impact"],
+    focus: "Leadership and influence",
+  },
+  {
+    level: 8,
+    name: "Self-Transcendence",
+    description: "Moving beyond self to serve higher purposes",
+    color: "from-indigo-400 to-purple-500",
+    requirements: ["Sustained leadership", "Significant contributions", "Wisdom demonstration"],
+    focus: "Service and transcendence",
+  },
+  {
+    level: 9,
+    name: "Creation Stage",
+    description: "Creating new value and leaving lasting legacy",
+    color: "from-yellow-400 to-amber-500",
+    requirements: ["Original contributions", "Legacy building", "Transformational impact"],
+    focus: "Creation and legacy",
+  },
+]
+
+export const gravityCategories: GravityCategory[] = [
+  {
+    id: "character-flaws",
+    name: "Character Flaws",
+    icon: AlertTriangle,
+    color: "from-red-400 to-rose-500",
+    description: "Personal weaknesses that hold you back",
+    examples: ["Procrastination", "Pride", "Impatience", "Dishonesty", "Selfishness"],
+  },
+  {
+    id: "unresolved-neuroses",
+    name: "Unresolved Neuroses",
+    icon: Brain,
+    color: "from-purple-400 to-pink-500",
+    description: "Psychological patterns that limit growth",
+    examples: ["Fear of failure", "Perfectionism", "Anxiety", "Depression", "Trauma responses"],
+  },
+  {
+    id: "negative-influences",
+    name: "Negative Influences",
+    icon: Users,
+    color: "from-orange-400 to-red-500",
+    description: "External factors that drag you down",
+    examples: ["Toxic relationships", "Bad habits", "Negative media", "Poor environment", "Limiting beliefs"],
+  },
+  {
+    id: "spiritual-disconnection",
+    name: "Spiritual Disconnection",
+    icon: Compass,
+    color: "from-slate-400 to-gray-500",
+    description: "Lack of connection to higher purpose",
+    examples: ["Meaninglessness", "Cynicism", "Materialism", "Spiritual apathy", "Value confusion"],
+  },
+] 

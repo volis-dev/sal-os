@@ -1,103 +1,190 @@
-import Image from "next/image";
+"use client"
+
+import { useState, useEffect } from "react"
+import { useAuth } from '@/hooks/useAuth'
+import { AuthGuard } from '@/components/auth/AuthGuard'
+import { Loader2 } from 'lucide-react'
+import {
+  BookOpen,
+  CheckCircle2,
+  Home as HomeIcon,
+  NewspaperIcon as Journal,
+  Library,
+  Map,
+  PenTool,
+  Settings as SettingsIcon,
+  Target,
+  TrendingUp,
+  Quote,
+  ArrowRight,
+  Lightbulb,
+  Sparkles,
+  Brain,
+  Users,
+  Award,
+} from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+
+import { GlobalDashboard } from "@/components/GlobalDashboard"
+import { Settings } from "@/components/Settings"
+import { Onboarding } from "@/components/Onboarding"
+import { JournalInterface } from "@/components/journal-interface"
+import { ModulesInterface } from "@/components/modules-interface"
+import { TasksInterface } from "@/components/tasks-interface"
+import { LibraryInterface } from "@/components/library-interface"
+import { LifeArenasInterface } from "@/components/life-arenas-interface"
+import { JourneyMapInterface } from "@/components/journey-map-interface"
+import { GrowthEngineInterface } from "@/components/growth-engine-interface"
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { isAuthenticated, isLoading, signOut } = useAuth()
+  const [activeTab, setActiveTab] = useState("Dashboard")
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    setIsClient(true)
+    // Check if user has completed onboarding
+    const onboardingCompleted = localStorage.getItem("sal-os-onboarding-completed")
+    if (!onboardingCompleted) {
+      setShowOnboarding(true)
+    }
+  }, [])
+
+  // Show loading state while auth is initializing
+  if (!isClient || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-slate-600">Loading SAL OS...</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </div>
+    )
+  }
+
+  return (
+    <AuthGuard requireAuth={true} requireEmailConfirmation={true}>
+      <SidebarProvider>
+        <div className="flex h-screen">
+          <AppSidebar 
+            setActiveTab={setActiveTab} 
+            currentTab={activeTab} 
+            onSignOut={signOut}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+          <main className="flex-1 overflow-auto">
+            <div className="p-6">
+              {activeTab === "Dashboard" && <GlobalDashboard onNavigateToModule={setActiveTab} />}
+              {activeTab === "Settings" && <Settings onNavigateToDashboard={() => setActiveTab("Dashboard")} />}
+              {activeTab === "Journal" && <JournalInterface />}
+              {activeTab === "Modules" && <ModulesInterface />}
+              {activeTab === "Tasks" && <TasksInterface />}
+              {activeTab === "Library" && <LibraryInterface />}
+              {activeTab === "Life Arenas" && <LifeArenasInterface />}
+              {activeTab === "Journey Map" && <JourneyMapInterface setActiveTab={setActiveTab} />}
+              {activeTab === "Growth Engine" && <GrowthEngineInterface />}
+            </div>
+          </main>
+        </div>
+
+        {showOnboarding && (
+          <Onboarding onComplete={() => {
+            setShowOnboarding(false)
+            localStorage.setItem("sal-os-onboarding-completed", "true")
+          }} />
+        )}
+      </SidebarProvider>
+    </AuthGuard>
+  )
+}
+
+function AppSidebar({ 
+  setActiveTab, 
+  currentTab, 
+  onSignOut 
+}: { 
+  setActiveTab: (tab: string) => void; 
+  currentTab: string;
+  onSignOut: () => void;
+}) {
+  const navigationItems = [
+    { title: "Dashboard", icon: HomeIcon, url: "#", isActive: currentTab === "Dashboard" },
+    { title: "Journey Map", icon: Map, url: "#", isActive: currentTab === "Journey Map" },
+    { title: "Modules", icon: BookOpen, url: "#", isActive: currentTab === "Modules" },
+    { title: "Journal", icon: Journal, url: "#", isActive: currentTab === "Journal" },
+    { title: "Life Arenas", icon: Target, url: "#", isActive: currentTab === "Life Arenas" },
+    { title: "Growth Engine", icon: TrendingUp, url: "#", isActive: currentTab === "Growth Engine" },
+    { title: "Tasks", icon: CheckCircle2, url: "#", isActive: currentTab === "Tasks" },
+    { title: "Library", icon: Library, url: "#", isActive: currentTab === "Library" },
+  ]
+
+  return (
+    <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center gap-2 px-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500 text-white">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <span className="text-lg font-semibold">SAL OS</span>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    onClick={() => setActiveTab(item.title)}
+                    className={item.isActive ? "bg-blue-100 text-blue-700" : ""}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.title}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarInset>
+        <div className="p-4 space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveTab("Settings")}
+            className="w-full"
+          >
+            <SettingsIcon className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSignOut}
+            className="w-full"
+          >
+            Sign Out
+          </Button>
+        </div>
+      </SidebarInset>
+    </Sidebar>
+  )
 }
