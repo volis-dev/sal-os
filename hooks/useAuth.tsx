@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { supabase } from '@/lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
-// Simplified auth state - no complex flags
+// Simplified auth state - MATCHES types/auth.ts
 interface AuthState {
   user: User | null
   session: Session | null
@@ -12,7 +12,7 @@ interface AuthState {
   isLoading: boolean
 }
 
-// Simplified auth context - no redirect methods
+// Simplified auth context - MATCHES types/auth.ts
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string) => Promise<{ error: string | null }>
@@ -35,8 +35,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth state...')
         const { data: { session } } = await supabase.auth.getSession()
         
+        console.log('Initial session:', session?.user?.email || 'none')
         setAuthState({
           user: session?.user ?? null,
           session: session,
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth state changes - SINGLE EVENT HANDLER
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email || 'no user')
+        console.log('🔄 Auth state change:', event, session?.user?.email || 'no user')
         
         setAuthState({
           user: session?.user ?? null,
@@ -70,24 +72,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      console.log('Cleaning up auth subscription')
+      subscription.unsubscribe()
+    }
   }, [])
 
   // Sign in - PURE FUNCTION, NO REDIRECTS
   const signIn = useCallback(async (email: string, password: string) => {
     try {
+      console.log('🔐 Attempting sign in for:', email)
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
 
       if (error) {
+        console.error('❌ Sign in error:', error.message)
         return { error: error.message }
       }
 
+      console.log('✅ Sign in successful, auth state change will trigger automatically')
       return { error: null }
     } catch (error) {
-      console.error('Sign in error:', error)
+      console.error('❌ Sign in exception:', error)
       return { error: 'An unexpected error occurred' }
     }
   }, [])
@@ -95,6 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign up - PURE FUNCTION, NO REDIRECTS
   const signUp = useCallback(async (email: string, password: string) => {
     try {
+      console.log('📝 Attempting sign up for:', email)
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -104,12 +115,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
+        console.error('❌ Sign up error:', error.message)
         return { error: error.message }
       }
 
+      console.log('✅ Sign up successful')
       return { error: null }
     } catch (error) {
-      console.error('Sign up error:', error)
+      console.error('❌ Sign up exception:', error)
       return { error: 'An unexpected error occurred' }
     }
   }, [])
@@ -117,9 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign out - PURE FUNCTION, NO REDIRECTS
   const signOut = useCallback(async () => {
     try {
+      console.log('🚪 Signing out...')
       await supabase.auth.signOut()
+      console.log('✅ Sign out successful')
     } catch (error) {
-      console.error('Sign out error:', error)
+      console.error('❌ Sign out error:', error)
     }
   }, [])
 

@@ -14,7 +14,7 @@ import Link from 'next/link'
 function LoginFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { signIn, isLoading } = useAuth()
+  const { signIn, isLoading, isAuthenticated, session } = useAuth()
   
   const [formData, setFormData] = useState({
     email: '',
@@ -24,6 +24,7 @@ function LoginFormContent() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [loginTriggered, setLoginTriggered] = useState(false)
 
   // Handle URL messages
   useEffect(() => {
@@ -45,26 +46,50 @@ function LoginFormContent() {
     }
   }, [searchParams])
 
-  // EVENT-DRIVEN LOGIN - NO useEffect REDIRECTS
+  // EVENT-DRIVEN REDIRECT - NO TIMEOUTS, NO RACE CONDITIONS
+  useEffect(() => {
+    if (loginTriggered && isAuthenticated && session) {
+      console.log('Auth state confirmed, executing redirect')
+      setIsSubmitting(false)
+      setLoginTriggered(false) // Reset flag
+      
+      const redirectPath = searchParams.get('redirect') || '/'
+      console.log('Redirecting to:', redirectPath)
+      
+      try {
+        router.push(redirectPath)
+      } catch (err) {
+        console.error('Navigation failed:', err)
+        setError('Navigation failed. Please try again.')
+        setIsSubmitting(false)
+      }
+    }
+  }, [loginTriggered, isAuthenticated, session, router, searchParams])
+
+  // PURE LOGIN HANDLER - NO REDIRECT LOGIC
   const handleSubmit = async () => {
     setError(null)
     setIsSubmitting(true)
 
     try {
+      console.log('Attempting login...')
       const { error } = await signIn(formData.email, formData.password)
       
       if (error) {
+        console.log('Login failed:', error)
         setError(error)
         setIsSubmitting(false)
+        setLoginTriggered(false)
       } else {
-        // DIRECT REDIRECT ON SUCCESS - NO STATE FLAGS
-        const redirectPath = searchParams.get('redirect') || '/'
-        router.push(redirectPath)
+        console.log('Login successful, waiting for auth state change...')
+        setLoginTriggered(true) // Signal that login was attempted successfully
+        // useEffect will handle redirect when auth state updates
       }
     } catch (err) {
       console.error('Login error:', err)
       setError('An unexpected error occurred')
       setIsSubmitting(false)
+      setLoginTriggered(false)
     }
   }
 
@@ -149,7 +174,7 @@ function LoginFormContent() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  {loginTriggered ? 'Redirecting...' : 'Signing in...'}
                 </>
               ) : (
                 'Sign In'

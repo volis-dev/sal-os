@@ -46,17 +46,20 @@ export function SignupForm() {
     setIsSubmitting(true)
 
     try {
+      console.log('Attempting signup...')
       const { error } = await signUp(formData.email, formData.password)
       
       if (error) {
+        console.log('Signup failed:', error)
         setError(error)
         setIsSubmitting(false)
       } else {
-        // DIRECT STATE CHANGE ON SUCCESS
+        console.log('Signup successful')
         setIsSuccess(true)
         setIsSubmitting(false)
       }
     } catch (err) {
+      console.error('Signup error:', err)
       setError('An unexpected error occurred')
       setIsSubmitting(false)
     }
@@ -65,6 +68,17 @@ export function SignupForm() {
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setError(null)
+  }
+
+  // SAFE NAVIGATION HANDLER
+  const handleBackToLogin = () => {
+    try {
+      router.push('/login')
+    } catch (err) {
+      console.error('Navigation to login failed:', err)
+      // Fallback to window location
+      window.location.href = '/login'
+    }
   }
 
   // Success state - EVENT-DRIVEN NAVIGATION
@@ -83,7 +97,7 @@ export function SignupForm() {
                 Please check your email and click the confirmation link to activate your account.
               </p>
               <Button
-                onClick={() => router.push('/login')}
+                onClick={handleBackToLogin}
                 className="w-full"
               >
                 Back to Sign In

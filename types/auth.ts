@@ -1,22 +1,22 @@
 import type { User, Session } from '@supabase/supabase-js'
 
-// Auth state types
+// Auth state types - ALIGNED WITH IMPLEMENTATION
 export interface AuthState {
   user: User | null
   session: Session | null
   isLoading: boolean
   isAuthenticated: boolean
-  isEmailConfirmed: boolean
+  // NOTE: isEmailConfirmed removed - not currently implemented in AuthProvider
+  // Add back when email confirmation tracking is needed
 }
 
-// Auth context types
+// Auth context types - ALIGNED WITH IMPLEMENTATION
 export interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
-  resetPassword: (email: string) => Promise<{ error: string | null }>
-  resendConfirmation: (email: string) => Promise<{ error: string | null }>
-  refreshSession: () => Promise<void>
+  // NOTE: resetPassword, resendConfirmation, refreshSession removed
+  // Add back when these features are implemented in AuthProvider
 }
 
 // Form types
@@ -50,4 +50,4 @@ export interface MiddlewareConfig {
   publicRoutes: string[]
   authRoutes: string[]
   redirectTo: string
-} 
+}
