@@ -59,12 +59,15 @@ function LoginFormContent() {
         setError(error)
         setIsSubmitting(false)
       } else {
+        console.log('Login successful, starting redirect...')
         // Just redirect to home, no fancy logic
         setTimeout(() => {
+          console.log('Executing redirect to /')
           window.location.href = '/'
         }, 100)
       }
     } catch (err) {
+      console.error('Login error caught:', err)
       setError('An unexpected error occurred')
       setIsSubmitting(false)
     }
