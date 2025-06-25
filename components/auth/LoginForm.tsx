@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
-export function LoginForm() {
+// Separate component that uses useSearchParams
+function LoginFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signIn, isLoading } = useAuth()
@@ -177,4 +178,17 @@ export function LoginForm() {
       </Card>
     </div>
   )
-} 
+}
+
+// Main component wrapped in Suspense
+export function LoginForm() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
+  )
+}
