@@ -46,8 +46,7 @@ function LoginFormContent() {
     }
   }, [searchParams])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     setError(null)
     setIsSubmitting(true)
 
@@ -100,7 +99,7 @@ function LoginFormContent() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -144,7 +143,8 @@ function LoginFormContent() {
             </div>
 
             <Button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               className="w-full"
               disabled={isSubmitting || isLoading}
             >
@@ -157,7 +157,7 @@ function LoginFormContent() {
                 'Sign In'
               )}
             </Button>
-          </form>
+          </div>
 
           <div className="text-center space-y-2">
             <Link
