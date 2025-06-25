@@ -15,7 +15,7 @@ import Link from 'next/link'
 function LoginFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { signIn, isLoading } = useAuth()
+  const { signIn, isLoading, isAuthenticated, session } = useAuth()
   
   const [formData, setFormData] = useState({
     email: '',
@@ -25,6 +25,7 @@ function LoginFormContent() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [justLoggedIn, setJustLoggedIn] = useState(false)
 
   // Handle URL messages
   useEffect(() => {
@@ -46,22 +47,44 @@ function LoginFormContent() {
     }
   }, [searchParams])
 
+  // CRITICAL: Redirect only after auth state confirms authentication
+  useEffect(() => {
+    if (justLoggedIn && isAuthenticated && session && !isLoading) {
+      console.log('Auth state confirmed, executing redirect...')
+      
+      // Use router.replace to avoid back button issues
+      const redirectPath = searchParams.get('redirect') || '/'
+      router.replace(redirectPath)
+    }
+  }, [justLoggedIn, isAuthenticated, session, isLoading, router, searchParams])
+
+  // Also handle case where user is already authenticated (e.g., page refresh)
+  useEffect(() => {
+    if (!justLoggedIn && isAuthenticated && session && !isLoading) {
+      console.log('Already authenticated, redirecting...')
+      const redirectPath = searchParams.get('redirect') || '/'
+      router.replace(redirectPath)
+    }
+  }, [isAuthenticated, session, isLoading, justLoggedIn, router, searchParams])
+
   const handleSubmit = async () => {
     setError(null)
     setIsSubmitting(true)
 
     try {
+      console.log('Starting login process...')
       const result = await signIn(formData.email, formData.password)
       const { error } = result
       
       if (error) {
+        console.log('Login failed:', error)
         setError(error)
         setIsSubmitting(false)
       } else {
-        // Just redirect to home, no fancy logic
-        setTimeout(() => {
-          window.location.href = '/'
-        }, 100)
+        console.log('Login successful, waiting for auth state change...')
+        // Set flag to indicate we just logged in
+        setJustLoggedIn(true)
+        // Keep isSubmitting true to show loading state while redirect happens
       }
     } catch (err) {
       console.error('Login error caught:', err)
@@ -151,7 +174,7 @@ function LoginFormContent() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  {justLoggedIn ? 'Redirecting...' : 'Signing in...'}
                 </>
               ) : (
                 'Sign In'

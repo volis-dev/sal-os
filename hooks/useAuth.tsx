@@ -22,35 +22,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Try to get session first (in case Supabase already has it)
-        let { data: { session } } = await supabase.auth.getSession()
+        console.log('Initializing auth state...')
         
-        // If no session, try to recover from localStorage
-        if (!session) {
-          const storedToken = localStorage.getItem('sb-rrlahnmnyuinoymrfufl-auth-token')
-          if (storedToken) {
-            try {
-              const tokenData = JSON.parse(storedToken)
-              if (tokenData.access_token && tokenData.refresh_token) {
-                // Set session and check if it worked
-                const { data, error } = await supabase.auth.setSession({
-                  access_token: tokenData.access_token,
-                  refresh_token: tokenData.refresh_token
-                })
-                
-                if (error) {
-                  console.error('Failed to restore session:', error)
-                  localStorage.removeItem('sb-rrlahnmnyuinoymrfufl-auth-token')
-                } else if (data.session) {
-                  session = data.session
-                }
-              }
-            } catch (e) {
-              console.error('Failed to parse stored token:', e)
-              localStorage.removeItem('sb-rrlahnmnyuinoymrfufl-auth-token')
-            }
-          }
+        // Get current session
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Session fetch error:', error)
         }
+        
+        console.log('Initial session:', session?.user?.email || 'none')
         
         if (session) {
           setAuthState({
@@ -83,12 +64,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
 
-    // Listen for auth changes
+    // Listen for auth changes - THIS IS THE CRITICAL PART
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email)
+        console.log('🔄 Auth state change:', event, session?.user?.email || 'no user')
         
+        // Always update state when auth changes, regardless of event type
         if (session) {
+          console.log('✅ Setting authenticated state')
           setAuthState({
             user: session.user,
             session,
@@ -97,6 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isEmailConfirmed: !!session.user.email_confirmed_at
           })
         } else {
+          console.log('❌ Setting unauthenticated state')
           setAuthState({
             user: null,
             session: null,
@@ -108,24 +92,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      console.log('Cleaning up auth subscription')
+      subscription.unsubscribe()
+    }
   }, [])
 
-  // Sign in
+  // Sign in - simplified to rely on auth state change
   const signIn = useCallback(async (email: string, password: string) => {
     try {
+      console.log('🔐 Attempting sign in for:', email)
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
 
       if (error) {
+        console.error('❌ Sign in error:', error.message)
         return { error: error.message }
       }
 
+      console.log('✅ Sign in successful, auth state change will trigger automatically')
       return { error: null }
     } catch (error) {
-      console.error('Sign in error:', error)
+      console.error('❌ Sign in exception:', error)
       return { error: 'An unexpected error occurred' }
     }
   }, [])
@@ -155,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign out
   const signOut = useCallback(async () => {
     try {
+      console.log('🚪 Signing out...')
       const { error } = await supabase.auth.signOut()
       if (error) {
         console.error('Sign out error:', error)
