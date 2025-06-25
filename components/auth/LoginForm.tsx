@@ -46,47 +46,50 @@ function LoginFormContent() {
     }
   }, [searchParams])
 
-  // EVENT-DRIVEN REDIRECT - NO TIMEOUTS, NO RACE CONDITIONS
+  // EVENT-DRIVEN REDIRECT - FIXED STATE MANAGEMENT
   useEffect(() => {
     if (loginTriggered && isAuthenticated && session) {
       console.log('Auth state confirmed, executing redirect')
-      setIsSubmitting(false)
-      setLoginTriggered(false) // Reset flag
+      setLoginTriggered(false) // Reset flag but keep isSubmitting true
       
       const redirectPath = searchParams.get('redirect') || '/'
       console.log('Redirecting to:', redirectPath)
       
       try {
         router.push(redirectPath)
+        // Don't reset isSubmitting here - let the navigation complete
       } catch (err) {
         console.error('Navigation failed:', err)
         setError('Navigation failed. Please try again.')
-        setIsSubmitting(false)
+        setIsSubmitting(false) // Only reset on navigation failure
       }
     }
   }, [loginTriggered, isAuthenticated, session, router, searchParams])
 
-  // PURE LOGIN HANDLER - NO REDIRECT LOGIC
+  // SIMPLE LOGIN HANDLER
   const handleSubmit = async () => {
+    console.log('🔥 LOGIN BUTTON CLICKED')
+    console.log('Form data:', { email: formData.email, hasPassword: !!formData.password })
+    
     setError(null)
     setIsSubmitting(true)
 
     try {
-      console.log('Attempting login...')
+      console.log('🔐 Calling signIn...')
       const { error } = await signIn(formData.email, formData.password)
       
       if (error) {
-        console.log('Login failed:', error)
+        console.log('❌ Login failed:', error)
         setError(error)
         setIsSubmitting(false)
         setLoginTriggered(false)
       } else {
-        console.log('Login successful, waiting for auth state change...')
-        setLoginTriggered(true) // Signal that login was attempted successfully
-        // useEffect will handle redirect when auth state updates
+        console.log('✅ Login successful, setting trigger...')
+        setLoginTriggered(true)
+        // Keep isSubmitting true until redirect completes
       }
     } catch (err) {
-      console.error('Login error:', err)
+      console.error('💥 Login exception:', err)
       setError('An unexpected error occurred')
       setIsSubmitting(false)
       setLoginTriggered(false)
@@ -97,6 +100,15 @@ function LoginFormContent() {
     setFormData(prev => ({ ...prev, [field]: value }))
     setError(null)
   }
+
+  // DEBUG INFO
+  console.log('🔍 LoginForm State:', {
+    isSubmitting,
+    loginTriggered,
+    isAuthenticated,
+    hasSession: !!session,
+    isLoading
+  })
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
