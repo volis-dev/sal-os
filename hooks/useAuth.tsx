@@ -22,8 +22,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Get initial session
-        const { data: { session } } = await supabase.auth.getSession()
+        // Try to get session first (in case Supabase already has it)
+        let { data: { session } } = await supabase.auth.getSession()
+        
+        // If no session, try to recover from localStorage
+        if (!session) {
+          const storedToken = localStorage.getItem('sb-rrlahnmnyuinoymrfufl-auth-token')
+          if (storedToken) {
+            try {
+              const tokenData = JSON.parse(storedToken)
+              if (tokenData.access_token && tokenData.refresh_token) {
+                // Set session and check if it worked
+                const { data, error } = await supabase.auth.setSession({
+                  access_token: tokenData.access_token,
+                  refresh_token: tokenData.refresh_token
+                })
+                
+                if (error) {
+                  console.error('Failed to restore session:', error)
+                  localStorage.removeItem('sb-rrlahnmnyuinoymrfufl-auth-token')
+                } else if (data.session) {
+                  session = data.session
+                }
+              }
+            } catch (e) {
+              console.error('Failed to parse stored token:', e)
+              localStorage.removeItem('sb-rrlahnmnyuinoymrfufl-auth-token')
+            }
+          }
+        }
         
         if (session) {
           setAuthState({
@@ -239,4 +266,4 @@ export function useRequireAuth() {
     isEmailConfirmed,
     isReady: !isLoading
   }
-} 
+}

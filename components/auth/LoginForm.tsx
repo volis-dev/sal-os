@@ -52,17 +52,14 @@ function LoginFormContent() {
 
     try {
       const result = await signIn(formData.email, formData.password)
-      console.log('SignIn result:', result)
       const { error } = result
       
       if (error) {
         setError(error)
         setIsSubmitting(false)
       } else {
-        console.log('Login successful, starting redirect...')
         // Just redirect to home, no fancy logic
         setTimeout(() => {
-          console.log('Executing redirect to /')
           window.location.href = '/'
         }, 100)
       }
