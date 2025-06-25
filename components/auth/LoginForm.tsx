@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense, useRef } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -11,11 +11,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
-// Separate component that uses useSearchParams
 function LoginFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { signIn, isLoading, isAuthenticated, session } = useAuth()
+  const { signIn, isLoading } = useAuth()
   
   const [formData, setFormData] = useState({
     email: '',
@@ -25,11 +24,6 @@ function LoginFormContent() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  
-  // Critical flags to prevent race conditions
-  const [hasInitialized, setHasInitialized] = useState(false)
-  const [userTriggeredLogin, setUserTriggeredLogin] = useState(false)
-  const redirectExecuted = useRef(false)
 
   // Handle URL messages
   useEffect(() => {
@@ -51,84 +45,32 @@ function LoginFormContent() {
     }
   }, [searchParams])
 
-  // PHASE 1: Handle initial auth state stabilization
-  useEffect(() => {
-    if (!isLoading && !hasInitialized) {
-      console.log('🔄 Auth state initialized:', { isAuthenticated, hasSession: !!session })
-      setHasInitialized(true)
-      
-      // If user is already authenticated on page load, redirect immediately
-      // This handles the case where user visits /login but is already logged in
-      if (isAuthenticated && session && !redirectExecuted.current) {
-        console.log('✅ Already authenticated on page load, redirecting...')
-        redirectExecuted.current = true
-        const redirectPath = searchParams.get('redirect') || '/'
-        router.replace(redirectPath)
-      }
-    }
-  }, [isLoading, hasInitialized, isAuthenticated, session, router, searchParams])
-
-  // PHASE 2: Handle post-login redirect (only after user actually logs in)
-  useEffect(() => {
-    if (
-      hasInitialized && 
-      userTriggeredLogin && 
-      isAuthenticated && 
-      session && 
-      !isLoading &&
-      !redirectExecuted.current
-    ) {
-      console.log('✅ Login successful, executing redirect...')
-      redirectExecuted.current = true
-      setIsSubmitting(false) // Reset submitting state
-      
-      const redirectPath = searchParams.get('redirect') || '/'
-      router.replace(redirectPath)
-    }
-  }, [hasInitialized, userTriggeredLogin, isAuthenticated, session, isLoading, router, searchParams])
-
+  // EVENT-DRIVEN LOGIN - NO useEffect REDIRECTS
   const handleSubmit = async () => {
-    if (redirectExecuted.current) return // Prevent action during redirect
-    
     setError(null)
     setIsSubmitting(true)
-    setUserTriggeredLogin(true) // Critical: Mark that user initiated login
 
     try {
-      console.log('🔐 User-triggered login for:', formData.email)
-      const result = await signIn(formData.email, formData.password)
-      const { error } = result
+      const { error } = await signIn(formData.email, formData.password)
       
       if (error) {
-        console.log('❌ Login failed:', error)
         setError(error)
         setIsSubmitting(false)
-        setUserTriggeredLogin(false) // Reset flag on failure
+      } else {
+        // DIRECT REDIRECT ON SUCCESS - NO STATE FLAGS
+        const redirectPath = searchParams.get('redirect') || '/'
+        router.push(redirectPath)
       }
-      // On success, let the useEffect handle redirect
     } catch (err) {
-      console.error('❌ Login exception:', err)
+      console.error('Login error:', err)
       setError('An unexpected error occurred')
       setIsSubmitting(false)
-      setUserTriggeredLogin(false)
     }
   }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     setError(null)
-  }
-
-  // Show loading during initial auth check
-  if (!hasInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center space-y-4">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-slate-600">Loading...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -207,7 +149,7 @@ function LoginFormContent() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {userTriggeredLogin ? 'Signing in...' : 'Processing...'}
+                  Signing in...
                 </>
               ) : (
                 'Sign In'
@@ -216,13 +158,6 @@ function LoginFormContent() {
           </div>
 
           <div className="text-center space-y-2">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              Forgot your password?
-            </Link>
-            
             <div className="text-sm text-slate-600">
               Don't have an account?{' '}
               <Link
@@ -239,7 +174,6 @@ function LoginFormContent() {
   )
 }
 
-// Main component wrapped in Suspense
 export function LoginForm() {
   return (
     <Suspense fallback={

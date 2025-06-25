@@ -2,129 +2,100 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User, Session, AuthError } from '@supabase/supabase-js'
-import type { AuthContextType, AuthState, LoginFormData, SignupFormData } from '@/types/auth'
+import type { User, Session } from '@supabase/supabase-js'
 
-// Create auth context
+// Simplified auth state - no complex flags
+interface AuthState {
+  user: User | null
+  session: Session | null
+  isAuthenticated: boolean
+  isLoading: boolean
+}
+
+// Simplified auth context - no redirect methods
+interface AuthContextType extends AuthState {
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string) => Promise<{ error: string | null }>
+  signOut: () => Promise<void>
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Auth provider component
+// Centralized Auth Provider - SINGLE SOURCE OF TRUTH
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     session: null,
-    isLoading: true,
     isAuthenticated: false,
-    isEmailConfirmed: false
+    isLoading: true
   })
 
-  // Initialize auth state
+  // Initialize auth state and listen for changes
   useEffect(() => {
+    // Get initial session
     const initializeAuth = async () => {
       try {
-        console.log('Initializing auth state...')
+        const { data: { session } } = await supabase.auth.getSession()
         
-        // Get current session
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        if (error) {
-          console.error('Session fetch error:', error)
-        }
-        
-        console.log('Initial session:', session?.user?.email || 'none')
-        
-        if (session) {
-          setAuthState({
-            user: session.user,
-            session,
-            isLoading: false,
-            isAuthenticated: true,
-            isEmailConfirmed: !!session.user.email_confirmed_at
-          })
-        } else {
-          setAuthState({
-            user: null,
-            session: null,
-            isLoading: false,
-            isAuthenticated: false,
-            isEmailConfirmed: false
-          })
-        }
+        setAuthState({
+          user: session?.user ?? null,
+          session: session,
+          isAuthenticated: !!session?.user,
+          isLoading: false
+        })
       } catch (error) {
         console.error('Auth initialization error:', error)
         setAuthState({
           user: null,
           session: null,
-          isLoading: false,
           isAuthenticated: false,
-          isEmailConfirmed: false
+          isLoading: false
         })
       }
     }
 
     initializeAuth()
 
-    // Listen for auth changes - THIS IS THE CRITICAL PART
+    // Listen for auth state changes - SINGLE EVENT HANDLER
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔄 Auth state change:', event, session?.user?.email || 'no user')
+      (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email || 'no user')
         
-        // Always update state when auth changes, regardless of event type
-        if (session) {
-          console.log('✅ Setting authenticated state')
-          setAuthState({
-            user: session.user,
-            session,
-            isLoading: false,
-            isAuthenticated: true,
-            isEmailConfirmed: !!session.user.email_confirmed_at
-          })
-        } else {
-          console.log('❌ Setting unauthenticated state')
-          setAuthState({
-            user: null,
-            session: null,
-            isLoading: false,
-            isAuthenticated: false,
-            isEmailConfirmed: false
-          })
-        }
+        setAuthState({
+          user: session?.user ?? null,
+          session: session,
+          isAuthenticated: !!session?.user,
+          isLoading: false
+        })
       }
     )
 
-    return () => {
-      console.log('Cleaning up auth subscription')
-      subscription.unsubscribe()
-    }
+    return () => subscription.unsubscribe()
   }, [])
 
-  // Sign in - simplified to rely on auth state change
+  // Sign in - PURE FUNCTION, NO REDIRECTS
   const signIn = useCallback(async (email: string, password: string) => {
     try {
-      console.log('🔐 Attempting sign in for:', email)
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
 
       if (error) {
-        console.error('❌ Sign in error:', error.message)
         return { error: error.message }
       }
 
-      console.log('✅ Sign in successful, auth state change will trigger automatically')
       return { error: null }
     } catch (error) {
-      console.error('❌ Sign in exception:', error)
+      console.error('Sign in error:', error)
       return { error: 'An unexpected error occurred' }
     }
   }, [])
 
-  // Sign up
+  // Sign up - PURE FUNCTION, NO REDIRECTS
   const signUp = useCallback(async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -143,80 +114,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Sign out
+  // Sign out - PURE FUNCTION, NO REDIRECTS
   const signOut = useCallback(async () => {
     try {
-      console.log('🚪 Signing out...')
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('Sign out error:', error)
-      }
+      await supabase.auth.signOut()
     } catch (error) {
       console.error('Sign out error:', error)
-    }
-  }, [])
-
-  // Reset password
-  const resetPassword = useCallback(async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login?message=check-email`
-      })
-
-      if (error) {
-        return { error: error.message }
-      }
-
-      return { error: null }
-    } catch (error) {
-      console.error('Reset password error:', error)
-      return { error: 'An unexpected error occurred' }
-    }
-  }, [])
-
-  // Resend confirmation email
-  const resendConfirmation = useCallback(async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login?message=check-email`
-        }
-      })
-
-      if (error) {
-        return { error: error.message }
-      }
-
-      return { error: null }
-    } catch (error) {
-      console.error('Resend confirmation error:', error)
-      return { error: 'An unexpected error occurred' }
-    }
-  }, [])
-
-  // Refresh session
-  const refreshSession = useCallback(async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      
-      if (error) {
-        console.error('Session refresh error:', error)
-        return
-      }
-
-      if (session) {
-        setAuthState({
-          user: session.user,
-          session,
-          isLoading: false,
-          isAuthenticated: true,
-          isEmailConfirmed: !!session.user.email_confirmed_at
-        })
-      }
-    } catch (error) {
-      console.error('Session refresh error:', error)
     }
   }, [])
 
@@ -224,10 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ...authState,
     signIn,
     signUp,
-    signOut,
-    resetPassword,
-    resendConfirmation,
-    refreshSession
+    signOut
   }
 
   return (
@@ -237,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Hook to use auth context
+// Simple hook - NO REDIRECT LOGIC
 export function useAuth() {
   const context = useContext(AuthContext)
   
@@ -246,16 +146,4 @@ export function useAuth() {
   }
   
   return context
-}
-
-// Hook for protected components
-export function useRequireAuth() {
-  const { isAuthenticated, isLoading, isEmailConfirmed } = useAuth()
-  
-  return {
-    isAuthenticated,
-    isLoading,
-    isEmailConfirmed,
-    isReady: !isLoading
-  }
 }

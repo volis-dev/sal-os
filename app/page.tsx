@@ -53,7 +53,9 @@ import { JourneyMapInterface } from "@/components/journey-map-interface"
 import { GrowthEngineInterface } from "@/components/growth-engine-interface"
 
 export default function Home() {
-  const { isAuthenticated, isLoading, signOut } = useAuth()
+  // SIMPLIFIED - NO CLIENT-SIDE AUTH GUARDS
+  // Middleware handles all route protection
+  const { signOut, isLoading } = useAuth()
   const [activeTab, setActiveTab] = useState("Dashboard")
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isClient, setIsClient] = useState(false)
@@ -67,7 +69,7 @@ export default function Home() {
     }
   }, [])
 
-  // Show loading state while auth is initializing
+  // Only show loading during initial client hydration
   if (!isClient || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -79,14 +81,7 @@ export default function Home() {
     )
   }
 
-  // Early return if not authenticated - ADD THIS
-  if (!isLoading && !isAuthenticated) {
-    if (typeof window !== 'undefined') {
-      window.location.replace('/login')
-    }
-    return null
-  }
-
+  // NO CLIENT-SIDE AUTH CHECKS - TRUST MIDDLEWARE
   return (
     <SidebarProvider>
       <div className="flex h-screen">

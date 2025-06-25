@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/types/database'
 
 // Public routes that don't require authentication
-const publicRoutes = ['/login', '/signup', '/forgot-password']
+const publicRoutes = ['/login', '/signup']
 
 // Auth routes that should redirect to dashboard if already authenticated
 const authRoutes = ['/login', '/signup']
@@ -62,60 +62,46 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Get current session - simplified and more reliable
+  // Get current session - SIMPLE CHECK
   let session = null
   try {
     const { data: { session: currentSession } } = await supabase.auth.getSession()
     session = currentSession
   } catch (error) {
-    console.error('Middleware session fetch error:', error)
-    // Continue with null session - be permissive on errors
+    console.error('Middleware session error:', error)
+    // Continue with null session
   }
 
-  // Get current pathname
   const { pathname } = request.nextUrl
-
-  // Check if route is public
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
 
-  console.log(`🛡️  Middleware: ${pathname} | Session: ${session?.user?.email || 'none'} | Public: ${isPublicRoute}`)
+  console.log(`Middleware: ${pathname} | Authenticated: ${!!session}`)
 
-  // CRITICAL: Only redirect authenticated users away from auth pages
-  // Do NOT redirect unauthenticated users TO auth pages to avoid loops
+  // SIMPLE RULE 1: Authenticated users cannot access auth pages
   if (session && isAuthRoute) {
-    // User is authenticated and trying to access login/signup
-    console.log('✅ Authenticated user accessing auth route, redirecting to home')
+    console.log('Authenticated user on auth route -> redirect to home')
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // CRITICAL: Only redirect unauthenticated users from protected routes
-  // Be very conservative here to avoid middleware loops
+  // SIMPLE RULE 2: Unauthenticated users cannot access protected pages
   if (!session && !isPublicRoute) {
-    // User is not authenticated and accessing protected route
-    console.log('❌ Unauthenticated user accessing protected route, redirecting to login')
+    console.log('Unauthenticated user on protected route -> redirect to login')
     const loginUrl = new URL('/login', request.url)
-    if (pathname !== '/') { // Only set redirect param if not home page
+    if (pathname !== '/') {
       loginUrl.searchParams.set('redirect', pathname)
     }
     return NextResponse.redirect(loginUrl)
   }
 
-  // Email confirmation check - be more lenient to avoid loops
+  // SIMPLE RULE 3: Email confirmation check (optional)
   if (session && !session.user.email_confirmed_at && !isPublicRoute) {
-    // Only redirect if this is clearly not a fresh auth flow
-    const referer = request.headers.get('referer')
-    const isFromAuthFlow = referer && (referer.includes('/login') || referer.includes('/signup'))
-    
-    if (!isFromAuthFlow) {
-      console.log('📧 Email not confirmed, redirecting to login')
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('message', 'email-not-confirmed')
-      return NextResponse.redirect(loginUrl)
-    }
+    console.log('Email not confirmed -> redirect to login')
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('message', 'email-not-confirmed')
+    return NextResponse.redirect(loginUrl)
   }
 
-  console.log('✅ Middleware allowing request')
   return response
 }
 

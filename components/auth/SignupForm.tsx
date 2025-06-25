@@ -26,6 +26,7 @@ export function SignupForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
+  // EVENT-DRIVEN SIGNUP - NO useEffect REDIRECTS
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -49,12 +50,14 @@ export function SignupForm() {
       
       if (error) {
         setError(error)
+        setIsSubmitting(false)
       } else {
+        // DIRECT STATE CHANGE ON SUCCESS
         setIsSuccess(true)
+        setIsSubmitting(false)
       }
     } catch (err) {
       setError('An unexpected error occurred')
-    } finally {
       setIsSubmitting(false)
     }
   }
@@ -64,6 +67,7 @@ export function SignupForm() {
     setError(null)
   }
 
+  // Success state - EVENT-DRIVEN NAVIGATION
   if (isSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
@@ -211,4 +215,4 @@ export function SignupForm() {
       </Card>
     </div>
   )
-} 
+}
