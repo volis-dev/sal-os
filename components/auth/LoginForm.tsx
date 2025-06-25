@@ -25,7 +25,7 @@ function LoginFormContent() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const [justLoggedIn, setJustLoggedIn] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
 
   // Handle URL messages
   useEffect(() => {
@@ -47,27 +47,22 @@ function LoginFormContent() {
     }
   }, [searchParams])
 
-  // CRITICAL: Redirect only after auth state confirms authentication
+  // Handle redirect when authenticated - SIMPLIFIED LOGIC
   useEffect(() => {
-    if (justLoggedIn && isAuthenticated && session && !isLoading) {
-      console.log('Auth state confirmed, executing redirect...')
+    if (isAuthenticated && session && !isLoading && !redirecting) {
+      console.log('User is authenticated, executing redirect...')
+      setRedirecting(true)
       
-      // Use router.replace to avoid back button issues
       const redirectPath = searchParams.get('redirect') || '/'
-      router.replace(redirectPath)
+      
+      // Use window.location.replace for immediate redirect
+      window.location.replace(redirectPath)
     }
-  }, [justLoggedIn, isAuthenticated, session, isLoading, router, searchParams])
-
-  // Also handle case where user is already authenticated (e.g., page refresh)
-  useEffect(() => {
-    if (!justLoggedIn && isAuthenticated && session && !isLoading) {
-      console.log('Already authenticated, redirecting...')
-      const redirectPath = searchParams.get('redirect') || '/'
-      router.replace(redirectPath)
-    }
-  }, [isAuthenticated, session, isLoading, justLoggedIn, router, searchParams])
+  }, [isAuthenticated, session, isLoading, redirecting, searchParams])
 
   const handleSubmit = async () => {
+    if (redirecting) return // Prevent multiple submissions during redirect
+    
     setError(null)
     setIsSubmitting(true)
 
@@ -82,9 +77,7 @@ function LoginFormContent() {
         setIsSubmitting(false)
       } else {
         console.log('Login successful, waiting for auth state change...')
-        // Set flag to indicate we just logged in
-        setJustLoggedIn(true)
-        // Keep isSubmitting true to show loading state while redirect happens
+        // Don't set isSubmitting to false - let the redirect handle it
       }
     } catch (err) {
       console.error('Login error caught:', err)
@@ -135,7 +128,7 @@ function LoginFormContent() {
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   className="pl-10"
                   required
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || redirecting}
                 />
               </div>
             </div>
@@ -152,13 +145,13 @@ function LoginFormContent() {
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   className="pl-10 pr-10"
                   required
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || redirecting}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || redirecting}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -169,12 +162,17 @@ function LoginFormContent() {
               type="button"
               onClick={handleSubmit}
               className="w-full"
-              disabled={isSubmitting || isLoading}
+              disabled={isSubmitting || isLoading || redirecting}
             >
-              {isSubmitting ? (
+              {redirecting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {justLoggedIn ? 'Redirecting...' : 'Signing in...'}
+                  Redirecting...
+                </>
+              ) : isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
                 </>
               ) : (
                 'Sign In'
