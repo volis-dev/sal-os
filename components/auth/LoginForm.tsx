@@ -57,9 +57,11 @@ function LoginFormContent() {
       if (error) {
         setError(error)
       } else {
-        // Redirect to dashboard or original destination
-        const redirectTo = searchParams.get('redirect') || '/'
-        router.push(redirectTo)
+        // Wait a moment for auth state to propagate
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // Force a hard navigation to avoid auth state issues
+        window.location.href = searchParams.get('redirect') || '/'
       }
     } catch (err) {
       setError('An unexpected error occurred')
